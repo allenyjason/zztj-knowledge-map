@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) 2026 allenyjason
+Copyright (c) 2026 资治通鉴知识图谱项目
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,3 +19,12 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+补充说明：
+
+本项目的原始史料《资治通鉴》（司马光撰，1084 年成书）属公有领域。
+
+MIT 许可仅覆盖本项目自行加工的关系数据集、消歧条目与界面代码。
+若使用者另行提取其中的史料原文用于再发布，请自行核查所引用版本的版权状况。
