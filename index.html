@@ -295,8 +295,11 @@ td.nm:hover{text-decoration:underline;}
 #yMajorFocus button{border:1px solid var(--line-2);border-radius:6px;padding:4px 8px;cursor:pointer;
  font-size:12px;background:var(--bg);color:var(--ink-2);font-family:inherit;max-width:100%;
  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-#yMajorFocus button:hover{border-color:var(--green-600);color:var(--green-800);background:var(--green-50);}
-#yMajorFocus button.on{background:var(--green-800);color:#fff;border-color:var(--green-800);}
+/* 命中当前年份区间：只用极淡浅绿底提示，绝不用内联 style（内联优先级高于 .on，会把白字覆盖掉） */
+#yMajorFocus button.hit:not(.on){background:var(--green-50);border-color:var(--green-100);color:var(--green-800);}
+#yMajorFocus button:hover:not(.on){border-color:var(--green-600);color:var(--green-800);background:var(--green-50);}
+#yMajorFocus button.on,
+#yMajorFocus button.on:hover{background:var(--green-800);color:#fff;border-color:var(--green-800);font-weight:600;}
 .mjgrp{font-size:12.5px;font-weight:600;color:var(--green-900);background:var(--green-50);
  border:1px solid var(--green-100);border-radius:7px;padding:6px 10px;margin:12px 0 6px;
  display:flex;justify-content:space-between;align-items:baseline;}
@@ -2536,6 +2539,8 @@ function majorGo(m, silent) {
  /* 设中心后 build() 已重绘；这里再补一次区间同步，防止后续被覆盖 */
  if (typeof renderRange === 'function') renderRange();
  if (typeof syncYearAllBtn === 'function') syncYearAllBtn();
+ /* 定位后区间已变，命中标记要同步刷新（setCenter→build() 不会走 refresh()） */
+ if (typeof renderMajorFocusMark === 'function') renderMajorFocusMark();
  const tip = document.getElementById('mjFocusTip');
  if (tip) {
   tip.innerHTML = '当前定位：<b>' + esc(m.n) + '</b> · '
@@ -2607,7 +2612,15 @@ function renderMajor() {
  const s = document.getElementById('mjSum');
  if (s) s.textContent = '共 ' + MAJOR.length + ' 条 · 当前筛出 ' + n + ' 条 · 关联事件 ' + evn + ' 条';
  body.querySelectorAll('.mjgo').forEach(b => b.onclick = () => {
-  const m = MAJOR[+b.dataset.n2];
+  const idx = +b.dataset.n2;
+  const m = MAJOR[idx];
+  /* 右栏「定位」同样点亮左栏对应按钮，保持两处选中态一致 */
+  const mjBox = document.getElementById('yMajorFocus');
+  if (mjBox) {
+   mjBox.querySelectorAll('button').forEach(x => x.classList.remove('on'));
+   const t = mjBox.querySelector('button[data-i="' + (idx + 1) + '"]');
+   if (t) t.classList.add('on');
+  }
   majorGo(m);
   b.parentElement.scrollIntoView({ block: 'center', behavior: 'smooth' });
  });
@@ -2706,16 +2719,26 @@ function pickCappedNodes(vis, vl, capN, orderFn) {
 }
 
 /* 当前区间覆盖了哪些大事 → 左侧按钮打点提示 */
+/* 左栏百件大事按钮的「命中当前年份区间」标记。
+   旧版用内联 style 写 color / borderColor / fontWeight，内联优先级高于
+   #yMajorFocus button.on，造成三处颜色错误：
+     ① 未选中时命中的按钮被染成深绿字+绿边+加粗，像选中却又不是选中；
+     ② 选中后 .on 的白字被内联深绿字覆盖，深绿底配深绿字，几乎看不见；
+     ③ 点「全」回到全书范围后 100 条全部命中，整排按钮一起变成同样的错误色。
+   现改用 .hit 类，并由 :not(.on) 保证选中态永不被覆盖；
+   全书范围不打标记（全部命中＝无信息量），点「全」后整排恢复统一默认色。 */
 function renderMajorFocusMark() {
  const box = document.getElementById("yMajorFocus");
  if (!box) return;
+ const isFull = fullRange();
  MAJOR.forEach((m, i) => {
   const b = box.querySelector("button[data-i='" + (i + 1) + "']");
   if (!b) return;
-  const on = (m.a <= yMax && m.b >= yMin);
-  b.style.borderColor = on ? "var(--green-600)" : "";
-  b.style.color = on ? "var(--green-800)" : "";
-  b.style.fontWeight = on ? "600" : "";
+  /* 兼容旧页面残留的内联样式 */
+  b.style.removeProperty("color");
+  b.style.removeProperty("border-color");
+  b.style.removeProperty("font-weight");
+  b.classList.toggle("hit", !isFull && (m.a <= yMax && m.b >= yMin));
  });
 }
 
